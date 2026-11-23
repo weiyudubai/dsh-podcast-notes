@@ -2595,11 +2595,37 @@ window.__ModuleLoader__.load({
         }
       };
 
+      const copyFeedRss = async (item) => {
+        const url = String(item?.url || '').trim();
+        if (!url) {
+          showToast('这个播客没有保存 RSS 地址', 'error');
+          return;
+        }
+        await copy(url, 'RSS 链接');
+      };
+
+      const removePodcast = async (item) => {
+        const title = item?.title || '这个播客';
+        const ok = window.confirm(
+          `从左侧列表移除《${title}》？\n\n这个播客的更新列表会删除；已下载的逐字稿和笔记仍保留在数据目录里。`,
+        );
+        if (!ok) return;
+        try {
+          await api('removeFeed', { feedId: item.id });
+          await reload();
+          showToast(`已移除《${title}》`, 'ok');
+        } catch (error) {
+          showToast(error.message, 'error');
+        }
+      };
+
       const openFeedMenu = (event, item) =>
         openMenu(event, [
           { label: '修改分类…', icon: 'tag', onClick: () => setCategoryEdit(item) },
           { label: '全部标为已读', icon: 'check', onClick: () => markAllRead(item.id) },
           { label: '刷新这个播客', icon: 'refresh', onClick: () => refreshAll(item.id) },
+          { label: '复制 RSS 链接', icon: 'rss', onClick: () => copyFeedRss(item) },
+          { label: '删除这个播客…', icon: 'trash', danger: true, onClick: () => removePodcast(item) },
         ]);
 
       const openEpisodeMenu = (event, episode) =>
